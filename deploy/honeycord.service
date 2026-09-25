@@ -1,0 +1,19 @@
+[Unit]
+Description=HoneyCord Discord honeypot bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/opus/honeycord-bot
+ExecStart=/usr/bin/node /home/opus/honeycord-bot/src/manager.js
+Restart=on-failure
+RestartSec=5
+EnvironmentFile=/home/opus/honeycord-bot/.env
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target
