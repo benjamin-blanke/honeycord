@@ -1,148 +1,114 @@
-<h1 align="center">
-  <a href="https://honeycord.blanke.lol" target="_blank">
-    <img src="https://honeycord.blanke.lol/honeycord-logo.png" alt="HoneyCord Logo" width="90">
-  </a>
-  <br>
-  HoneyCord
-</h1>
+# HoneyCord
 
-<p align="center">
-  <strong>Catch Bots. Keep Humans. 🍯</strong>
-</p>
+> A fast, English Discord honeypot bot built for real communities.
 
-> HoneyCord is a lightweight Discord security bot that uses honeypot-based detection to catch automated spam without bothering real members.
+HoneyCord creates a dedicated honeypot channel when it joins a server. The channel contains a short Components V2 warning with HoneyCord branding and a clickable `Kicks` button. Messages sent there are treated as suspicious activity and can trigger a kick, ban, or softban.
+
+## Highlights
+
+- Discord auto-sharding for large multi-server deployments
+- PostgreSQL-backed shared state instead of local JSON storage
+- Global slash-command registration
+- Components V2 UI with custom HoneyCord emoji support
+- Automatic setup of one or multiple honeypot channels per server
+- Fast moderation path: moderation does not wait for DM delivery
+- Softban, ban and kick support
+- Optional branded DM cards with HoneyCord website link
+- Visible troubleshooting card when Discord rejects an action
+- Admin-only `/honeypot panel` command for short honeypot notes
+- Server owners and administrators can write in honeypots without moderation
+- Protected user IDs for owners and test accounts
+- Dry-run mode for safe testing
+- Docker Compose and systemd deployment files
 
 ## How it works
 
-1. [**Invite HoneyCord**](https://discord.com/oauth2/authorize?client_id=1552723613239607397) to your Discord server.
-2. Create and configure a dedicated honeypot channel.
-3. HoneyCord quietly monitors the trap for suspicious activity.
-4. When automated spam takes the bait, HoneyCord detects the trigger and takes action.
-5. Your real members continue using the server normally.
+1. HoneyCord joins a server.
+2. It creates or repairs the configured number of honeypot channels.
+3. It posts a compact Components V2 warning.
+4. A message in that channel is deleted and recorded in PostgreSQL.
+5. HoneyCord performs the configured moderation action.
+6. If enabled, the user receives a branded DM card.
 
-> **ⓘ Note:** HoneyCord is designed as an additional security layer. You can use it alongside your existing moderation bots.
+HoneyCord does **not** create a separate moderation-log channel. PostgreSQL stores the audit data used for counters and status information.
 
-<details>
-<summary><strong>Why HoneyCord?</strong></summary>
+## Requirements
 
-### Security without annoying humans
+- Node.js 20 or newer
+- PostgreSQL 14 or newer
+- Discord bot application
+- Message Content Intent
+- Server Members Intent
 
-Most anti-bot systems put another obstacle between real users and your community.
+The bot role needs View Channels, Send Messages, Embed Links, Manage Channels, Manage Messages, Kick Members and Ban Members. Its highest role must be above users it needs to moderate.
 
-HoneyCord takes a different approach.
-
-Instead of requiring every member to complete verification or a CAPTCHA, HoneyCord creates a trap specifically for unwanted automation.
-
-Spam bots often send messages across available channels without understanding what those channels are for. A honeypot takes advantage of that behavior.
-
-When the trap is triggered, HoneyCord can react before the spam spreads further.
-
-### Built to stay simple
-
-HoneyCord isn't trying to become another massive all-in-one Discord bot.
-
-It focuses on one job:
-
-**Detect unwanted automation and keep it away from your community.**
-
-That means:
-
-* 🍯 Honeypot-based detection
-* ⚡ Automatic reactions
-* 🛡️ Focused server protection
-* 👤 No CAPTCHA walls for normal members
-* 🔧 Simple configuration
-* 🪶 Lightweight by design
-
-> *"Spam walks in. HoneyCord shuts it down."*
-
-</details>
-
-<details>
-<summary><strong>Tips</strong></summary>
-
-### Getting the most out of HoneyCord
-
-Place your honeypot somewhere automated spam is reasonably likely to encounter it.
-
-Keep the channel separate from normal conversations so legitimate members don't accidentally interact with the trap.
-
-Make sure HoneyCord has the permissions required to perform the configured moderation actions and that its role is positioned correctly in your server hierarchy.
-
-For setup instructions and recommendations, see the [**documentation**](https://honeycord.blanke.lol/docs).
-
-</details>
-
-## Links
-
-* 🍯 [**Invite HoneyCord**](https://discord.com/oauth2/authorize?client_id=1552723613239607397)
-* 📖 [**Documentation**](https://honeycord.blanke.lol/docs)
-* 💬 [**Support Server**](https://honeycord.blanke.lol/server)
-* 🌐 [**Website**](https://honeycord.blanke.lol)
-* 🐛 [**Report a Bug**](https://honeycord.blanke.lol/bug-report)
-* 💡 [**Request a Feature**](https://honeycord.blanke.lol/feature-request)
-* 🔐 [**Security**](https://honeycord.blanke.lol/security)
-* 📝 [**Changelog**](https://honeycord.blanke.lol/changelog)
-
-## Getting Started (dev)
-
-Clone the repository:
+## Quick start with Docker
 
 ```bash
-git clone https://github.com/benjamin-blanke/honeycord.git
-cd honeycord
+cp .env.example .env
+nano .env
+docker compose up -d --build
+docker compose logs -f honeycord
 ```
 
-Install dependencies:
+Keep `HONEYCORD_DRY_RUN=true` for the first test. For production, set it to `false` only after checking the role hierarchy and protected IDs.
 
-```bash
-npm install
-```
+## Environment
 
-Configure your environment variables:
+Required values:
 
 ```env
 DISCORD_TOKEN=your_bot_token
-CLIENT_ID=1552723613239607397
+DISCORD_CLIENT_ID=your_application_id
+POSTGRES_PASSWORD=long_random_password
+DATABASE_URL=postgresql://honeycord:long_random_password@postgres:5432/honeycord
 ```
 
-Start HoneyCord:
+Useful options:
 
-```bash
-npm start
+```env
+DISCORD_TEST_GUILD_ID=      # optional; instant command registration while testing
+HONEYCORD_EMOJI_ID=         # numeric ID of the honeycord_new app emoji
+PROTECTED_USER_IDS=         # comma-separated Discord user IDs
+TRIGGER_ACTION=softban      # softban, ban or kick
+DELETE_MESSAGE_SECONDS=3600
+DM_TRIGGERED_USERS=true
+HONEYCORD_DRY_RUN=true
+DEFAULT_HONEYPOT_NAME=honey-pot
+HONEYCORD_HONEYPOT_COUNT=1   # 1–20 monitored honeypot channels per server
 ```
 
-> Never commit your Discord token or other credentials to the repository.
+Leave `DISCORD_TEST_GUILD_ID` empty in production so commands are registered globally. Global command propagation can take some time.
 
-## Self-hosting
+## Commands
 
-You can run your own HoneyCord instance using the source code in this repository.
+- `/honeypot setup` — create or repair all configured honeypot channels
+- `/honeypot status` — show protection and moderation statistics
+- `/honeypot enable` — enable moderation for the server
+- `/honeypot disable` — pause moderation for the server
+- `/honeypot channel` — show the configured honeypot channel
 
-Before deploying, make sure you have:
+## Project layout
 
-* A Discord application and bot
-* Node.js installed
-* The required environment variables
-* Appropriate Discord permissions
-* A persistent hosting environment
+```text
+src/manager.js      shard manager and global command registration
+src/worker.js       Discord event worker
+src/db.js           PostgreSQL schema and queries
+src/components.js   Components V2 message builders
+src/commands.js     slash-command definitions
+docker-compose.yml  HoneyCord + PostgreSQL deployment
+deploy/             systemd unit
+```
 
-Or simply use the official hosted version:
+## Production notes
 
-[**Add HoneyCord to your server →**](https://discord.com/oauth2/authorize?client_id=1552723613239607397)
+- Never commit `.env` or bot tokens.
+- Keep `HONEYCORD_DRY_RUN=true` while testing.
+- Add administrator and owner IDs to `PROTECTED_USER_IDS`.
+- Softban is deliberately two Discord requests: ban, then unban. Use `kick` when the fastest single moderation request is more important than message cleanup.
+- Discord controls shard allocation and may require approval for privileged intents at large scale.
+- Back up PostgreSQL before changing the deployment.
 
-## Contributing
+## License
 
-Bug fixes, improvements and useful contributions are welcome.
-
-For larger changes, please open an issue first so the idea can be discussed before implementation.
-
-Keep contributions focused on HoneyCord's main goal: **simple and effective honeypot protection for Discord communities.**
-
-<sub>
-
----
-
-Made with 🍯 by **B Tech**
-© 2026 B Tech · [Website](https://honeycord.blanke.lol) · [Support](https://honeycord.blanke.lol/server)
-
-</sub>
+Private HoneyCord project. Add a license before publishing the repository publicly.

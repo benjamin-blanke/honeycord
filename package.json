@@ -1,0 +1,17 @@
+{
+  "name": "honeycord",
+  "version": "0.1.0",
+  "private": true,
+  "description": "HoneyCord – an English Discord honeypot bot with Components V2 messages.",
+  "main": "src/manager.js",
+  "scripts": {
+    "start": "node src/manager.js",
+    "check": "node --check src/manager.js && node --check src/worker.js && node --check src/db.js && node --check src/components.js && node --check src/commands.js"
+  },
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "discord.js": "^14.21.0",
+    "dotenv": "^16.6.1",
+    "pg": "^8.16.3"
+  }
+}
